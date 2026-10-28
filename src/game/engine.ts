@@ -637,9 +637,9 @@ export class Game {
     });
     this.removeDeadCompanions();
     const before = this.zombies.length;
-    for (const z of this.zombies) if (z.hp <= 0) this.burst(z.x, z.y, "#5a1010", 14);
+    for (const z of this.zombies) if (z.hp <= 0) { this.kills++; this.burst(z.x, z.y, "#5a1010", 14); }
     this.zombies = this.zombies.filter((z) => z.hp > 0 && Math.hypot(z.x - p.x, z.y - p.y) < 1100);
-    this.kills += before - this.zombies.length > 0 ? this.zombiesKilledCount(before) : 0;
+    void before;
 
     // efeitos
     for (const f of this.floats) { f.t -= dt; f.y -= 30 * dt; }
@@ -655,8 +655,6 @@ export class Game {
     if (p.hp <= 0) { p.hp = 0; this.dead = true; if (typeof localStorage !== "undefined") localStorage.removeItem(SAVE_KEY); return; }
     this.saveT += dt; if (this.saveT > 10) { this.saveT = 0; this.save(); }
   }
-  private pendingKills = 0;
-  zombiesKilledCount(before: number) { void before; const k = this.pendingKills; this.pendingKills = 0; return k; }
 
   drive(v: Vehicle, dt: number, j: { x: number; y: number }, mag: number) {
     const T = VEHICLE_TYPES[v.type], p = this.p, why = this.canStart(v);
@@ -917,10 +915,3 @@ export class Game {
   }
 }
 
-// contador de abates: intercepta remoção de zumbis mortos
-const origUpdate = Game.prototype.update;
-Game.prototype.update = function (this: Game, dt: number) {
-  const dead = this.zombies.filter((z) => z.hp <= 0).length;
-  (this as unknown as { pendingKills: number }).pendingKills += dead;
-  origUpdate.call(this, dt);
-};
